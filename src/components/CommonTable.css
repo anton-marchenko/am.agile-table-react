@@ -1,0 +1,32 @@
+/** =====  CommonTable  ====  */
+
+.table {
+  border-spacing: 0;
+  border-collapse: collapse;
+
+  td,
+  th {
+    padding: 4px;
+    text-align: center;
+    border: 1px solid #bbb;
+  }
+}
+
+.table-msg {
+  border: 1px solid #bbb;
+  padding: 4px;
+}
+
+.action-col {
+  background-color: rgb(255, 254, 210);
+}
+
+.sort {
+  cursor: pointer;
+}
+
+.dir-icon {
+  color: #aaa;
+}
+
+/** =====  (END) CommonTable  ====  */

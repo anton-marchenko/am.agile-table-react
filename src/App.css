@@ -1,24 +1,24 @@
 /** =====  App  ====  */
 
-.app {
+.App__box {
   display: flex;
   height: 100%;
 }
 
-.left-side {
+.App__left-side {
   flex-grow: 1;
   padding: 10px;
   overflow: auto;
 }
 
-.right-side {
+.App__right-side {
   flex-shrink: 0;
   width: 320px;
   position: relative;
   border-left: 1px solid #ddd;
 }
 
-.right-side__inner {
+.App__right-side__inner {
   position: absolute;
   top: 0;
   left: 0;
@@ -27,43 +27,8 @@
   padding: 10px;
 }
 
-.create-btn-box {
+.App__create-btn-box {
   padding-top: 10px;
 }
 
 /** =====  (END) App  ====  */
-
-
-
-/** =====  CommonTable  ====  */
-
-.table {
-  border-spacing: 0;
-  border-collapse: collapse;
-
-  td,
-  th {
-    padding: 4px;
-    text-align: center;
-    border: 1px solid #bbb;
-  }
-}
-
-.table-msg {
-  border: 1px solid #bbb;
-  padding: 4px;
-}
-
-.action-col {
-  background-color: rgb(255, 254, 210);
-}
-
-.sort {
-  cursor: pointer;
-}
-
-.dir-icon {
-  color: #aaa;
-}
-
-/** =====  (END) CommonTable  ====  */

@@ -1,109 +1,25 @@
+import { useEffect, useState } from "react";
 import "./App.css";
-
-const CommonTable = () => {
-  return (
-    <table className="table">
-      <tr>
-        <th className="action-col">Action</th>
-        <th>
-          <span _ngcontent-gdu-c27="" className="sort">
-            {" "}
-            Rating
-          </span>
-        </th>
-        <th style={{ width: "100" }}>
-          <span className="sort">
-            {" "}
-            Author <span className="dir-icon">[desc]</span>
-          </span>
-        </th>
-        <th>
-          <span _ngcontent-gdu-c27="" className="sort">
-            <span style={{ color: "green" }}> Name </span>
-          </span>
-        </th>
-        <th>
-          <span _ngcontent-gdu-c27="">
-            <span> Descr </span>
-          </span>
-        </th>
-        <th>
-          <span _ngcontent-gdu-c27="">
-            <span> Date </span>
-          </span>
-        </th>
-        <th>
-          <span _ngcontent-gdu-c27="" className="sort">
-            <span> Tags </span>
-            <span _ngcontent-gdu-c27="" className="dir-icon">
-              [desc]
-            </span>
-          </span>
-        </th>
-        <th>
-          <span _ngcontent-gdu-c27="">
-            <span> New Column </span>
-          </span>
-        </th>
-      </tr>
-      <tr>
-        <td className="action-col">
-          <button>Edit</button>
-        </td>
-        <td> 4 </td>
-        <td> Ant </td>
-        <td>
-          <span style={{ color: "green" }}> joe </span>
-        </td>
-        <td> pass </td>
-        <td> Oct 16, 2021 </td>
-        <td>
-          <div> tag1 </div>
-          <div> tag2 </div>
-        </td>
-        <td> --- </td>
-      </tr>
-      <tr>
-        <td className="action-col">
-          <button>Edit</button>
-        </td>
-        <td> 5 </td>
-        <td> Lex </td>
-        <td>
-          <span style={{ color: "green" }}> joe2 </span>
-        </td>
-        <td> pass3 </td>
-        <td> Oct 10, 2021 </td>
-        <td>
-          <div> tag1 </div>
-        </td>
-        <td> --- </td>
-      </tr>
-      <tr>
-        <td className="action-col">
-          <button>Edit</button>
-        </td>
-        <td> --- </td>
-        <td> --- </td>
-        <td>
-          <span style={{ color: "green" }}> --- </span>
-        </td>
-        <td> --- </td>
-        <td> --- </td>
-        <td>---</td>
-        <td> --- </td>
-      </tr>
-    </table>
-  );
-};
-
-const RowEditForm = () => {
-  return <div>xxx</div>;
-};
+import { CommonTable } from "./components/CommonTable";
+import { DictionaryContext, RowActionContext, TableContext } from "./context";
+import {
+  DictionaryState,
+  ListResponse,
+  RowDto,
+  TableColumnsDto,
+  TableColumnsResponse,
+  TableRowsDto,
+} from "./table.models";
+import {
+  fetchData,
+  resolveDictionaryState,
+  resolveGridColumns,
+} from "./table.utils";
+import { RowEditForm } from "./components/edit/RowEditForm";
 
 const CreateButton = () => {
   return (
-    <div className="create-btn-box">
+    <div className="App__create-btn-box">
       <button disabled={true} onClick={() => {}}>
         Create row
       </button>
@@ -115,21 +31,60 @@ const AttributeConfigurator = () => {
   return <div>xxx</div>;
 };
 
+const findRow = (rows: TableRowsDto | null, rowId: number) =>
+  rows?.find((row) => row.rowId === rowId);
+
 function App() {
+  const [dictionaries, setDictionaries] = useState<DictionaryState>(null);
+  const [rows, setRows] = useState<TableRowsDto | null>(null);
+  const [columns, setColumns] = useState<TableColumnsDto | null>(null);
+  const [selectedRow, setSelectedRow] = useState<RowDto>();
+  const [displayRowEditForm, setDisplayRowEditForm] = useState(false);
+
+  useEffect(() => {
+    fetchData<TableRowsDto>("rows", (data) => {
+      setRows(data);
+    });
+
+    fetchData<TableColumnsResponse>("columns", (data) => {
+      const value = data ? resolveGridColumns(data) : null;
+
+      setColumns(value);
+    });
+
+    setTimeout(() => {
+      fetchData<ListResponse>("list-items", (data) => {
+        const value = data ? resolveDictionaryState(data) : null;
+
+        setDictionaries(value);
+      });
+    }, 2000);
+  }, []);
+
   return (
-    <div className="app">
-      <div className="left-side">
-        <CommonTable></CommonTable>
+    <DictionaryContext.Provider value={dictionaries}>
+      <TableContext.Provider value={{ rows, columns }}>
+        <RowActionContext.Provider
+          value={{
+            onEdit: (rowId: number) => setSelectedRow(findRow(rows, rowId)),
+          }}
+        >
+          <div className="App__box">
+            <div className="App__left-side">
+              <CommonTable></CommonTable>
 
-        <CreateButton></CreateButton>
+              <CreateButton></CreateButton>
 
-        <RowEditForm></RowEditForm>
-      </div>
+              <RowEditForm row={selectedRow}></RowEditForm>
+            </div>
 
-      <div className="right-side">
-        <AttributeConfigurator></AttributeConfigurator>
-      </div>
-    </div>
+            <div className="App__right-side">
+              <AttributeConfigurator></AttributeConfigurator>
+            </div>
+          </div>
+        </RowActionContext.Provider>
+      </TableContext.Provider>
+    </DictionaryContext.Provider>
   );
 }
 
