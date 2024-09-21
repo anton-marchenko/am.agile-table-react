@@ -12,6 +12,7 @@ import {
   RowEditModel,
   TableColumnsDto,
   TableColumnsResponse,
+  TableRowsDto,
   TextValueDto,
 } from "./table.models";
 
@@ -69,31 +70,79 @@ export const getEmptyRow = (): RowEditModel => {
   return {
     rowId: null,
     explicit: {
-      rating: "",
+      rating: 0,
       author: "",
     },
-    attributed2: {
+    attributed: {
       text: {},
       date: {},
       multiList: {},
     },
+  };
+};
+
+export const resolvePatchedRowData = ({
+  operation,
+  rowId,
+  rows,
+  patchedRow,
+}: {
+  operation: "create" | "update";
+  rowId: number;
+  rows: TableRowsDto;
+  patchedRow: RowDto;
+}) => {
+  if (operation === "create") {
+    return [
+      ...rows,
+      {
+        ...patchedRow,
+        rowId: Number(rowId),
+      },
+    ];
+  }
+
+  return rows.map((row) => {
+    if (row.rowId === rowId) {
+      return patchedRow;
+    }
+
+    return row;
+  });
+};
+
+export const mockResolveUpdatedRow = (
+  rowForm: RowEditModel
+  // columns: TableColumnsDto
+): RowDto => {
+  const randomId = () => new Date().getTime();
+  const idPart = rowForm.rowId ? { rowId: rowForm.rowId } : {};
+
+  return {
+    ...idPart,
+    explicit: {
+      rating: rowForm.explicit.rating,
+      author: {
+        id: rowForm.explicit.author,
+        name: "JOPA!" + randomId(),
+      },
+    },
     attributed: {
-      text: [],
+      text: Object.entries(rowForm.attributed.text).map(([k, v]) => ({
+        ...v,
+        id: v.id ?? randomId(),
+        etag: "",
+      })),
       date: [],
       multiList: [],
     },
-  };
+  } as any as RowDto;
 };
 
 export const resolveRowForm = (
   row: RowDto,
   columns: TableColumnsDto
 ): RowEditModel => {
-  const resolveItem = <T extends TextValueDto | DateValueDto>(item: T) => ({
-    ...item,
-    value: item.value ?? "",
-  });
-
   const resolveTextAttr = <T extends TextValueDto | DateValueDto>(cell: T) => {
     return {
       id: cell.id,
@@ -125,7 +174,8 @@ export const resolveRowForm = (
               multiList: {
                 ...acc.multiList,
                 [column.alias]: {
-                  id: cells[0].id, // TODO - продумать как сохранять мультилист. Тут будет проблема CRUD
+                  // TODO - продумать как сохранять мультилист.
+                  // Тут может быть будет проблема CRUD
                   attributeId: column.attributeId,
                   value,
                 },
@@ -133,7 +183,7 @@ export const resolveRowForm = (
             };
           }
 
-          const resolveValue = (cellType: "text" | "date") => {
+          const resolveTextValue = (cellType: "text" | "date") => {
             const cells = row.attributed[cellType];
             const cell = cells.find(
               (cell) => cell.attributeId === column.attributeId
@@ -152,7 +202,7 @@ export const resolveRowForm = (
             };
           };
 
-          return resolveValue(column.cellType);
+          return resolveTextValue(column.cellType);
         },
         {
           text: {},
@@ -165,36 +215,58 @@ export const resolveRowForm = (
   return {
     rowId: row.rowId,
     explicit: {
-      rating: String(row.explicit.rating || ""),
+      rating: row.explicit.rating || 0,
       author: row.explicit.author?.id ?? "",
     },
-    attributed2: resolveAttrCollection(),
-    attributed: {
-      text: row.attributed.text.map(resolveItem),
-      date: row.attributed.date.map(resolveItem),
-      multiList: row.attributed.multiList,
-    },
+    attributed: resolveAttrCollection(),
   };
 };
 
-export const patchRow = ({
+export const patchExplicitCell = ({
+  row,
+  newData,
+}: {
+  row: RowEditModel;
+  newData: Partial<RowEditModel["explicit"]>;
+}) => {
+  const newRow: RowEditModel = {
+    ...row,
+    explicit: {
+      ...row.explicit,
+      ...newData,
+    },
+  };
+
+  return newRow;
+};
+
+type RowWithPatchedAttributedCellParams =
+  | {
+      row: RowEditModel;
+      cellType: "text" | "date";
+      alias: string;
+      value: string;
+    }
+  | {
+      row: RowEditModel;
+      cellType: "multiList";
+      alias: string;
+      value: number[];
+    };
+
+export const getRowWithPatchedAttributedCell = ({
   row,
   cellType,
   alias,
   value,
-}: {
-  row: RowEditModel;
-  cellType: "text" | "date";
-  alias: string;
-  value: string;
-}) => {
-  const cell = row.attributed2[cellType][alias];
+}: RowWithPatchedAttributedCellParams) => {
+  const cell = row.attributed[cellType][alias];
   const newRow: RowEditModel = {
     ...row,
-    attributed2: {
-      ...row.attributed2,
+    attributed: {
+      ...row.attributed,
       [cellType]: {
-        ...row.attributed2[cellType],
+        ...row.attributed[cellType],
         [alias]: {
           ...cell,
           value,
@@ -206,6 +278,7 @@ export const patchRow = ({
   return newRow;
 };
 
+// @deprecated сейчас вместо сервера используется IndexedDB
 export const fetchData = async <T>(
   source: string,
   setDataCb: (data: T | null) => void

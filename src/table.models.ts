@@ -85,7 +85,6 @@ export type AttributedCellEditModelCollection = {
   };
   multiList: {
     [alias: string]: {
-      id: number | null;
       attributeId: number;
       value: number[];
     };
@@ -95,27 +94,10 @@ export type AttributedCellEditModelCollection = {
 export type RowEditModel = {
   rowId: number | null;
   readonly explicit: {
-    rating: string;
+    rating: number;
     author: string;
   };
-  attributed2: AttributedCellEditModelCollection;
-  readonly attributed: {
-    text: readonly {
-      id: number | null;
-      attributeId: number;
-      value: string;
-    }[];
-    date: readonly {
-      id: number | null;
-      attributeId: number;
-      value: string;
-    }[];
-    multiList: readonly {
-      id: number | null;
-      attributeId: number;
-      listItemId: number;
-    }[];
-  };
+  attributed: AttributedCellEditModelCollection;
 };
 
 /** ===== CELLS ==== */

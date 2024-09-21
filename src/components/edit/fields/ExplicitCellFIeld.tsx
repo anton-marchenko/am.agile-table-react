@@ -1,24 +1,32 @@
 import { useContext } from "react";
-import { ExplicitColumnDto } from "../../../table.models";
+import { ExplicitColumnDto, RowEditModel } from "../../../table.models";
 import { RowEditContext } from "../../../context";
 import { TextControl } from "../controls/TextControl";
 import { AuthorCellField } from "./AuthorCellField";
+import { patchExplicitCell as getRowWithPatchedExplicitCell } from "../../../table.utils";
 
 export const ExplicitCellField = ({
   column,
-  handleChange,
 }: {
   column: ExplicitColumnDto;
-  handleChange: (val: string) => void;
 }) => {
-  const {row} = useContext(RowEditContext);
+  const { row, updateRow } = useContext(RowEditContext);
 
   if (column.alias === "rating") {
     return (
       <TextControl
         type="number"
         value={row.explicit.rating}
-        onChange={(value) => handleChange(value)}
+        onChange={(value) => {
+          const updatedRow: RowEditModel = getRowWithPatchedExplicitCell({
+            row,
+            newData: {
+              rating: value,
+            },
+          });
+
+          updateRow(updatedRow);
+        }}
       />
     );
   }
@@ -27,7 +35,16 @@ export const ExplicitCellField = ({
     return (
       <AuthorCellField
         value={row.explicit.author}
-        handleChange={handleChange}
+        handleChange={(value) => {
+          const updatedRow: RowEditModel = getRowWithPatchedExplicitCell({
+            row,
+            newData: {
+              author: value,
+            },
+          });
+
+          updateRow(updatedRow);
+        }}
       ></AuthorCellField>
     );
   }

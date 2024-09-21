@@ -1,18 +1,43 @@
+import { useMemo } from "react";
 import { DictionaryItem } from "../../../table.models";
 import "./ListControl.css";
 
+type Props<T extends string | number> =
+  | {
+      type: "single";
+      value: T;
+      dictionary: readonly DictionaryItem<T>[] | null | undefined;
+      onChange: (v: T) => void;
+    }
+  | {
+      type: "multiple";
+      value: number[];
+      dictionary: readonly DictionaryItem<number>[] | null | undefined;
+      onChange: (v: number[]) => void;
+    };
+
 export const ListControl = <T extends string | number>({
+  type,
   dictionary,
   value,
   onChange,
-}: {
-  value: T;
-  dictionary: readonly DictionaryItem<T>[] | null;
-  onChange: (v: T) => void;
-}) => {
+}: Props<T>) => {
+  const preparedValue = useMemo(() => {
+    if (type === "multiple") {
+      return value.map((val) => String(val));
+    }
+
+    return value;
+  }, [type, value]);
+
   if (!dictionary) {
     return (
-      <select disabled className="ListControl__select" defaultValue="Loading">
+      <select
+        disabled
+        multiple={type === "multiple"}
+        className="ListControl__select"
+        defaultValue="Loading"
+      >
         <option value="Loading">Loading...</option>
       </select>
     );
@@ -21,11 +46,25 @@ export const ListControl = <T extends string | number>({
   return (
     <select
       className="ListControl__select"
-      value={value}
+      multiple={type === "multiple"}
+      value={preparedValue}
       onChange={(e) => {
+        if (type === "multiple") {
+          const selectedIndexes = Array.from(e.target.selectedOptions);
+          const values = selectedIndexes.map(
+            (element) => dictionary[element.index].id
+          );
+
+          onChange(values);
+
+          return;
+        }
+
         /**
          * Because e.currentTarget.value is always a string,
          * even if we specify numeric values for our options.
+         *
+         * @link https://mariusschulz.com/blog/passing-generics-to-jsx-elements-in-typescript
          */
         const { selectedIndex } = e.currentTarget;
         const id = dictionary[selectedIndex].id;

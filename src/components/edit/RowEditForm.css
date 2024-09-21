@@ -30,3 +30,15 @@
   margin-bottom: 2px;
   font-weight: bold;
 }
+
+
+.RowEditForm__debug-box {
+  margin-top: 10px;
+  border: 1px solid rgb(163, 163, 163);
+  background-color: #efeded;
+}
+
+.RowEditForm__buttons-box {
+  display: flex;
+  gap: 5px;
+}

@@ -11,7 +11,8 @@ import {
 import { isPredefinedAttr } from "../table.utils";
 import "./CommonTable.css";
 import { Cell } from "./cell/Cell";
-import { RowActionContext, TableContext } from "../context";
+import { DataSavingContext, RowActionContext, TableContext } from "../context";
+import { Button } from "./Button";
 
 const getAttributedColumnStyle = (isPredefined: boolean) =>
   isPredefined ? { color: "green" } : {};
@@ -112,7 +113,7 @@ const TableRow = ({
   return (
     <tr>
       <td className="action-col">
-        <button onClick={() => onEdit(row.rowId)}>Edit</button>
+        <Button onClick={() => onEdit(row.rowId)}>Edit</Button>
       </td>
       {columns.map((column) => (
         <td key={column.alias}>

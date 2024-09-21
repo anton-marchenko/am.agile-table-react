@@ -1,7 +1,7 @@
 import { useContext, useMemo } from "react";
 import { RowEditContext } from "../../../context";
 import { TextControl } from "../controls/TextControl";
-import { patchRow } from "../../../table.utils";
+import { getRowWithPatchedAttributedCell } from "../../../table.utils";
 
 export const AttributedCellTextField = ({
   cellType,
@@ -12,17 +12,21 @@ export const AttributedCellTextField = ({
 }) => {
   const { row, updateRow } = useContext(RowEditContext);
   const value = useMemo(() => {
-    const cell = row.attributed2[cellType][alias];
+    const cell = row.attributed[cellType][alias];
 
     return cell?.value ?? "";
   }, [row, alias, cellType]);
+  const valueType = useMemo(
+    () => (cellType === "text" ? "text" : "datetime-local"),
+    [cellType]
+  );
 
   return (
     <TextControl
-      type={cellType === "text" ? "text" : "datetime-local"}
+      type={valueType}
       value={value}
       onChange={(value) => {
-        const newRow = patchRow({
+        const newRow = getRowWithPatchedAttributedCell({
           row,
           cellType,
           alias,

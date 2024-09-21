@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { fetchData } from "../../../table.utils";
-import { Dictionary, DictionaryItem } from "../../../table.models";
+import { Dictionary } from "../../../table.models";
 import { ListControl } from "../controls/ListControl";
 
 type UsersDictionary = Dictionary<string> | null;
 
 export const AuthorCellField = ({
   handleChange,
-  value
+  value,
 }: {
-  value: string,
-  handleChange: (val: string) => void;
+  value: string;
+  handleChange: (value: string) => void;
 }) => {
   const [users, setUsers] = useState<UsersDictionary>(null);
 
@@ -26,10 +26,11 @@ export const AuthorCellField = ({
   });
 
   return (
-    <ListControl<string>
+    <ListControl
+      type="single"
       value={value}
       dictionary={users}
-      onChange={(v) => console.log(v)}
+      onChange={handleChange}
     ></ListControl>
   );
 };

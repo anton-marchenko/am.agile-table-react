@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { RowEditContext, TableContext } from "../../context";
+import { DataSavingContext, RowEditContext, TableContext } from "../../context";
 import {
   AttributedColumnDto,
   GridColumnDto,
@@ -7,61 +7,33 @@ import {
   RowEditModel,
 } from "../../table.models";
 import "./RowEditForm.css";
-import { getEmptyRow, resolveRowForm } from "../../table.utils";
 import { ExplicitCellField } from "./fields/ExplicitCellFIeld";
 import { AttributedCellTextField } from "./fields/AttributedCellTextField";
 import { AttributedCellMultiListField } from "./fields/AttributedCellMultiListField";
+import { Button } from "../Button";
 
-const AttributedCellField = ({
-  column,
-  handleChange,
-}: {
-  column: AttributedColumnDto;
-  handleChange: (val: string) => void;
-}) => {
-  const {row} = useContext(RowEditContext);
-  const handleMl = (v: any) => {
-    console.log("JO", v);
-  };
-
+const AttributedCellField = ({ column }: { column: AttributedColumnDto }) => {
   if (column.cellType === "multiList") {
     return (
       <>
         <div>
-          <AttributedCellMultiListField
-            row={row}
-            column={column}
-            onChange={handleMl}
-          />
+          <AttributedCellMultiListField column={column} />
         </div>
       </>
     );
   }
 
   return (
-    <AttributedCellTextField
-      cellType={column.cellType}
-      alias={column.alias}
-    />
+    <AttributedCellTextField cellType={column.cellType} alias={column.alias} />
   );
 };
 
 const CellForm = ({ column }: { column: GridColumnDto }) => {
   if (column.kind === "explicit") {
-    return (
-      <ExplicitCellField
-        column={column}
-        handleChange={() => {}}
-      ></ExplicitCellField>
-    );
+    return <ExplicitCellField column={column}></ExplicitCellField>;
   }
 
-  return (
-    <AttributedCellField
-      column={column}
-      handleChange={() => {}}
-    ></AttributedCellField>
-  );
+  return <AttributedCellField column={column}></AttributedCellField>;
 };
 
 const ColumnItem = ({ column }: { column: GridColumnDto }) => {
@@ -79,34 +51,69 @@ const columnItems = (columns: readonly GridColumnDto[]) => {
   ));
 };
 
-export const RowEditForm = ({ row }: { row?: RowDto }) => {
+const ProcessingMessage = ({ message }: { message: string }) => {
+  if (!message) {
+    return <></>;
+  }
+
+  return <div className="RowEditForm__processing-box">{message}</div>;
+};
+
+export const RowEditForm = ({
+  display,
+  onSaved,
+  onSaving,
+  onClose,
+}: {
+  display: boolean;
+  onSaving: () => void;
+  onSaved: () => void;
+  onClose: () => void;
+}) => {
   const { columns } = useContext(TableContext);
-  const [rowFormData, setRowFormData] = useState<RowEditModel>(getEmptyRow());
+  const { row } = useContext(RowEditContext);
+  const dataSaving = useContext(DataSavingContext);
+  const [processingMessage, setProcessingMessage] = useState<string>("");
 
-  useEffect(() => {
-    if (!columns) {
-      return;
-    }
-    if (!row) {
-      return;
-    }
-
-    setRowFormData(resolveRowForm(row, columns));
-  }, [row, columns]);
+  if (!display) {
+    return <></>;
+  }
 
   if (!columns) {
     return <>No columns data</>;
   }
 
   return (
-    <RowEditContext.Provider value={{ row: rowFormData, updateRow: setRowFormData}}>
+    <>
       <div className="RowEditForm__form-box">
-        {/* <div className="RowEditForm__processing-box">Saving...</div> */}
+        <ProcessingMessage message={processingMessage} />
         {columnItems(columns)}
+        <div className="RowEditForm__buttons-box">
+          <Button
+            onClick={() => {
+              onSaving();
+              setProcessingMessage("Saving...");
+
+              setTimeout(() => {
+                onSaved();
+                setProcessingMessage("");
+              }, 100);
+            }}
+          >
+            Save
+          </Button>
+          <Button
+            onClick={() => {
+              onClose();
+            }}
+          >
+            Close
+          </Button>
+        </div>
       </div>
-      <div>
-        {JSON.stringify(rowFormData)}
+      <div className="RowEditForm__debug-box">
+        <pre>{JSON.stringify(row, undefined, 2)}</pre>
       </div>
-    </RowEditContext.Provider>
+    </>
   );
 };

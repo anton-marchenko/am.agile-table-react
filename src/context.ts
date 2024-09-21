@@ -19,7 +19,8 @@ export const DictionaryContext = createContext<DictionaryState>(null);
 export const TableContext = createContext<{
   rows: TableRowsDto | null;
   columns: TableColumnsDto | null;
-}>({ rows: null, columns: null });
+  setColumns: (columns: TableColumnsDto) => void
+}>({ rows: null, columns: null, setColumns: () => {} });
 
 /**
  * row edit action
@@ -35,3 +36,9 @@ export const RowEditContext = createContext<{
   row: RowEditModel;
   updateRow: (value: RowEditModel) => void;
 }>({ row: getEmptyRow(), updateRow: () => {} });
+
+/**
+ * Сохранение данных на бек
+ * (фризит нажат кнопок в UI)
+ */
+export const DataSavingContext = createContext<boolean>(false);

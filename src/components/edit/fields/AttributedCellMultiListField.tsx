@@ -1,80 +1,36 @@
-import { useContext, useEffect, useMemo, useState } from "react";
-import { AttributedColumnDto, RowEditModel } from "../../../table.models";
-import { DictionaryContext } from "../../../context";
+import { useContext, useMemo } from "react";
+import { AttributedColumnDto } from "../../../table.models";
+import { DictionaryContext, RowEditContext } from "../../../context";
+import { getRowWithPatchedAttributedCell } from "../../../table.utils";
+import { ListControl } from "../controls/ListControl";
 
 export const AttributedCellMultiListField = ({
-  row,
   column,
-  onChange,
 }: {
   column: AttributedColumnDto;
-  row: RowEditModel;
-  onChange: (v: any) => void;
 }) => {
+  const { row, updateRow } = useContext(RowEditContext);
   const dictionaries = useContext(DictionaryContext);
   const dictionary = dictionaries?.get(column.listId || -1);
-  const options = useMemo(() => {
-    if (!dictionary) {
-      return [];
-    }
-
-    return dictionary.map(
-      (item) => ({ value: String(item.id), label: item.name } as const)
-    );
-  }, [dictionary]);
   const values = useMemo(() => {
-    console.log("JO!!useMemoML");
-
-    return row.attributed.multiList
-      .filter((cell) => cell.attributeId === column.attributeId)
-      .map((cell) => {
-        return String(cell.listItemId);
-      });
+    return row.attributed.multiList[column.alias]?.value ?? [];
   }, [row, column]);
 
-  const [val, setVal] = useState<readonly string[]>([]);
-
-  useEffect(() => {
-    setVal(values);
-  }, [values]);
-
-  if (!dictionary) {
-    return <>loading...</>;
-  }
-
   return (
-    <>
-      <div>
-        <select
-          className="ListControl__select"
-          value={val}
-          multiple={true}
-          onChange={(e) => {
-            /**
-             * Because e.currentTarget.value is always a string,
-             * even if we specify numeric values for our options.
-             */
-            const selectedIndexes = Array.from(e.target.selectedOptions);
-            const optionValues = selectedIndexes.map(
-              (element) => options[element.index].value
-            );
-            const dictionaryIds = selectedIndexes.map(
-              (element) => dictionary[element.index].id
-            );
+    <ListControl
+      type="multiple"
+      dictionary={dictionary}
+      value={values}
+      onChange={(values) => {
+        const newRow = getRowWithPatchedAttributedCell({
+          row,
+          cellType: "multiList",
+          alias: column.alias,
+          value: values,
+        });
 
-            setVal(optionValues);
-            onChange(dictionaryIds);
-          }}
-        >
-          {options.map((item) => {
-            return (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-    </>
+        updateRow(newRow);
+      }}
+    />
   );
 };
